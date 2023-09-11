@@ -1,4 +1,4 @@
-﻿Imports System.Data.OleDb
+Imports System.Data.OleDb
 Imports System.Data
 
 Module Module1
@@ -10,6 +10,7 @@ Module Module1
     Public ds As New DataSet()
     Public qry As String = Nothing
     Public maintable As DataGridView = MainForm.dgv1
+    Public logIN_p As String = Nothing
 
     Sub connectDB()
         conn.Close()
@@ -17,45 +18,71 @@ Module Module1
         conn.Open()
     End Sub
 
+    Sub xdelete()
+        ' maintable.SelectedRows.
+
+    End Sub
+
+#Region "LOAD_TB_From_DB"
+
     Public Function Load_TB_from_DB(qry As String, xfunction As String, tblename As String) As Boolean
         connectDB()
+        ds.Tables.Clear()
 
         If xfunction = Nothing Then
-            ds.Tables.Clear()
 
             cmd = New OleDbCommand(qry, conn)
             da = New OleDbDataAdapter(cmd)
             da.Fill(ds, tblename)
             maintable.DataSource = ds.Tables(tblename)
+
 #Region "LOGIN"
         ElseIf xfunction = "login" Then
 
             Dim idparam As New OleDbParameter("@userID", login.usertxt.Text)
             Dim pwordparam As New OleDbParameter("@pword", login.pwordtxt.Text)
-
+            Dim idparam1 As New OleDbParameter("@userID", login_2.userID.Text)
+            Dim pwordparam1 As New OleDbParameter("@pword", login_2.pword.Text)
+            Dim ds1 As New DataSet
             qry = "SELECT * FROM UserAcc WHERE UserID = @userID AND Pass_Word = @pword"
             cmd = New OleDbCommand(qry, conn)
-            cmd.Parameters.Add(idparam)
-            cmd.Parameters.Add(pwordparam)
-            dr = cmd.ExecuteReader()
 
+            If logIN_p = "login1" Then
+                cmd.Parameters.Add(idparam)
+                cmd.Parameters.Add(pwordparam)
+            ElseIf logIN_p = "login2" Then
+                cmd.Parameters.Add(idparam1)
+                cmd.Parameters.Add(pwordparam1)
+            End If
+            da = New OleDbDataAdapter(cmd)
+            da.Fill(ds1, "UserID")
+            dr = cmd.ExecuteReader()
             dr.Read()
 
 
             If dr.HasRows Then
                 Dim userName As String = dr("User_Name").ToString
-                MainForm.Show()
-                MessageBox.Show("Wellcome   " + userName)
+
+                If logIN_p = "login1" Then
+                    MainForm.Show()
+
+                    Dim row As DataRow = ds1.Tables("UserID").Rows(0)
+                    MainForm.UserMenu.Text = row("User_Name").ToString()
+
+                    MessageBox.Show("Wellcome   " + userName)
+                ElseIf logIN_p = "login2" Then
+                    xdelete()
+                    login_2.Close()
+                    MessageBox.Show("Deleted Succesfully")
+                End If
 
             Else
-                MessageBox.Show("User Not Found")
-                login.pwordtxt.Clear()
-                login.usertxt.Focus()
-
-
+                    MessageBox.Show("User Not Found")
+                    login.pwordtxt.Clear()
                 Return False
 
             End If
+
 #End Region
 
 #Region "Register User"
@@ -88,13 +115,16 @@ Module Module1
 
         End If
         Return True
+
     End Function
+#End Region
+
 #End Region
 
 #Region "Delete user"
     Public Function Delete_User(qry As String, xfunction As String, tblname As String) As Boolean
 
-        connectDB()
+        cmd = New OleDbCommand(qry, conn)
 
 
         Return True
