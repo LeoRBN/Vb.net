@@ -12,6 +12,7 @@ Module Module1
     Public maintable As DataGridView = MainForm.dgv1
     Public logIN_p As String = Nothing
 
+
     Sub connectDB()
         conn.Close()
         conn.ConnectionString = constr
@@ -19,7 +20,13 @@ Module Module1
     End Sub
 
     Sub xdelete()
-        ' maintable.SelectedRows.
+
+        Dim selectedRow As DataGridViewRow = Userlist.dgvuserlist.SelectedRows(0)
+        qry = "DELETE FROM UserAcc WHERE UserID = @primarykey"
+        cmd = New OleDbCommand(qry, conn)
+        cmd.Parameters.AddWithValue("@primarykey", selectedRow.Cells("UserID").Value)
+        cmd.ExecuteNonQuery()
+        Userlist.dgvuserlist.Rows.Remove(selectedRow)
 
     End Sub
 
@@ -28,7 +35,7 @@ Module Module1
     Public Function Load_TB_from_DB(qry As String, xfunction As String, tblename As String) As Boolean
         connectDB()
         ds.Tables.Clear()
-
+        MainForm.tableName.Text = tblename
         If xfunction = Nothing Then
 
             cmd = New OleDbCommand(qry, conn)
@@ -71,14 +78,14 @@ Module Module1
 
                     MessageBox.Show("Wellcome   " + userName)
                 ElseIf logIN_p = "login2" Then
-                    xdelete()
                     login_2.Close()
+                    xdelete()
                     MessageBox.Show("Deleted Succesfully")
                 End If
 
             Else
-                    MessageBox.Show("User Not Found")
-                    login.pwordtxt.Clear()
+                MessageBox.Show("User Not Found")
+                login.pwordtxt.Clear()
                 Return False
 
             End If
@@ -113,8 +120,30 @@ Module Module1
             da.Fill(ds, tblename)
             Userlist.dgvuserlist.DataSource = ds.Tables(tblename)
 
+#Region "UPDATE"
+        ElseIf xfunction = "Update" Then
+
+            Dim fldname As String = Nothing
+            Dim selectedROw As DataGridViewRow = MainForm.dgv1.SelectedRows(0)
+
+            Select Case tblename
+                Case tblename = "Area"
+                    fldname = "ID"
+                Case tblename = "ST_people"
+                    fldname = "STM_id"
+                Case Else : Exit Select
+            End Select
+
+            Dim item As String = selectedROw.Cells(fldname).Value.ToString
+            qry = "SELECT * FROM " + tblename
+            qry = "WHERE " + fldname + "=" + item
+            cmd = New OleDbCommand(qry, conn)
+            cmd.ExecuteNonQuery()
+
         End If
+#End Region
         Return True
+
 
     End Function
 #End Region
@@ -124,7 +153,7 @@ Module Module1
 #Region "Delete user"
     Public Function Delete_User(qry As String, xfunction As String, tblname As String) As Boolean
 
-        cmd = New OleDbCommand(qry, conn)
+
 
 
         Return True
@@ -132,3 +161,4 @@ Module Module1
 #End Region
 
 End Module
+
