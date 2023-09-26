@@ -160,5 +160,80 @@ Module Module1
     End Function
 #End Region
 
+        
+
+'THIS CODE WILL UPLOAD A CSV FILE TO THE DATABASE. MAKE USE THE CULOMN HEADER OF CSV IS SAME WITH THE DATABASE
+
+        
+'CODE FOR FORM
+
+        Private Sub selectfile_Click(sender As Object, e As EventArgs) Handles selectfile.Click
+
+    Dim openfiledialog As New OpenFileDialog
+    openfiledialog.Filter = "CSV files (*.csv)|.csv"
+
+    If openfiledialog.ShowDialog() = DialogResult.OK Then
+        Dim selectedfile As String = openfiledialog.FileName
+
+        Using reader As New StreamReader(selectedfile)
+            Dim dt As New DataTable()
+            Dim isfirstrow As Boolean = True
+
+            While Not reader.EndOfStream
+                Dim line As String = reader.ReadLine()
+                Dim header() As String = line.Split(",")
+
+                If dt.Columns.Count = 0 Then
+                    For Each head As String In header
+                        dt.Columns.Add(head)
+                    Next
+                Else
+                    dt.Rows.Add(header)
+
+                End If
+            End While
+            dgvupload.DataSource = dt
+            rcount.Text = dgvupload.Rows.Count
+
+        End Using
+    End If
+
+End Sub
+
+'CODE FOR MODULE
+
+         Public Function UPLOAD_DATA(qry As String, xfunction As String, esdtype As String, esdstatus As String) As Boolean
+
+     connectDB()
+     Dim esdUpload As DataGridView = Usercontrol.dgvupload
+     Dim dt As New DataTable()
+
+     For Each col As DataGridViewColumn In esdUpload.Columns
+         dt.Columns.Add(col.HeaderText, col.ValueType)
+
+     Next
+     For Each row As DataGridViewRow In esdUpload.Rows
+         Dim rowDT As DataRow = dt.Rows.Add()
+         For Each cell As DataGridViewCell In row.Cells
+             rowDT(cell.ColumnIndex) = cell.Value
+
+         Next
+     Next
+
+
+     qry = "SELECT * FROM ESD_WS"
+     Using da As New OleDbDataAdapter()
+         da.SelectCommand = New OleDbCommand(qry, conn)
+         Using cmdbuilder As New OleDbCommandBuilder(da)
+             da.Update(dt)
+
+         End Using
+         MessageBox.Show("UPLOAD success")
+     End Using
+
+     Return True
+End Function
+
+
 End Module
 
